@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.12'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.doculens'
+version = '0.0.1-SNAPSHOT'
+description = 'doculens'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    set('springAiVersion', "1.1.3")
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // AI 모델 — Phase 1-3(Embedding), 1-4(RAG) 단계에서 추가 예정
+    // implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+    // implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
+    // implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    // implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
+    // implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
