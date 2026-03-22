@@ -1,28 +1,35 @@
 package com.doculens.domain.document.service;
 
+import com.doculens.ai.ingestion.IngestionPipeline;
 import com.doculens.domain.document.dto.DocumentResponse;
 import com.doculens.domain.document.entity.SourceType;
 import com.doculens.domain.document.repository.DocumentRepository;
 import com.doculens.global.error.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final DocumentCommandService commandService;
+    private final IngestionPipeline ingestionPipeline;
 
     public DocumentResponse upload(UUID collectionId, MultipartFile file, String title) {
         String safeFilename = sanitizeFilename(file.getOriginalFilename());
@@ -32,15 +39,23 @@ public class DocumentService {
         String documentTitle = (title != null && !title.isBlank()) ? title : safeFilename;
         SourceType sourceType = resolveSourceType(safeFilename);
 
-        return commandService.save(collectionId, documentTitle, sourceType,
+        DocumentResponse response = commandService.save(collectionId, documentTitle, sourceType,
                 contentHash, file.getSize());
+
+        // 임시 파일로 복사 후 비동기 파이프라인 실행
+        Path tempFile = copyToTempFile(file, response.id());
+        ingestionPipeline.process(response.id(), new FileSystemResource(tempFile));
+
+        return response;
     }
 
+    @Transactional(readOnly = true)
     public Page<DocumentResponse> findByCollectionId(UUID collectionId, Pageable pageable) {
         return documentRepository.findByCollectionId(collectionId, pageable)
                 .map(DocumentResponse::from);
     }
 
+    @Transactional(readOnly = true)
     public DocumentResponse findById(UUID id) {
         return DocumentResponse.from(
                 documentRepository.findById(id)
@@ -49,6 +64,17 @@ public class DocumentService {
 
     public void delete(UUID id) {
         commandService.delete(id);
+    }
+
+    private Path copyToTempFile(MultipartFile file, UUID documentId) {
+        try {
+            Path tempDir = Files.createDirectories(Path.of(System.getProperty("java.io.tmpdir"), "doculens"));
+            Path tempFile = tempDir.resolve(documentId.toString());
+            file.transferTo(tempFile);
+            return tempFile;
+        } catch (IOException e) {
+            throw new RuntimeException("임시 파일 복사 실패", e);
+        }
     }
 
     private void validateFile(MultipartFile file, String filename) {
@@ -96,7 +122,7 @@ public class DocumentService {
                 }
             }
             return HexFormat.of().formatHex(digest.digest());
-        } catch (NoSuchAlgorithmException | java.io.IOException e) {
+        } catch (NoSuchAlgorithmException | IOException e) {
             throw new RuntimeException("파일 해시 계산 실패", e);
         }
     }
