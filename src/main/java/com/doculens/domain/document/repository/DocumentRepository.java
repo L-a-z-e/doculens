@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.doculens.domain.document.entity.DocumentStatus;
+
 import java.util.UUID;
 
 public interface DocumentRepository extends JpaRepository<Document, UUID> {
@@ -17,6 +19,11 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     boolean existsByCollectionIdAndContentHash(UUID collectionId, String contentHash);
 
     long countByCollectionId(UUID collectionId);
+
+    long countByStatus(DocumentStatus status);
+
+    @Query("SELECT COALESCE(SUM(d.totalChunks), 0) FROM Document d")
+    long sumTotalChunks();
 
     @Modifying
     @Query("DELETE FROM Document d WHERE d.collection.id = :collectionId")
