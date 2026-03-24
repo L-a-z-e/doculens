@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,18 +11,30 @@ interface Message {
 }
 
 export default function ChatPage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const collectionId = searchParams.get('collectionId');
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(() => crypto.randomUUID());
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // TODO: collectionId를 선택할 수 있는 UI 추가 필요
-  const collectionId = 'placeholder';
-
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  if (!collectionId) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">컬렉션을 먼저 선택하세요</p>
+          <Button onClick={() => navigate('/documents')}>문서 관리로 이동</Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -71,12 +84,20 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen flex-col">
-      <header className="border-b p-4">
+      <header className="border-b p-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">DocuLens Chat</h1>
+        <Button variant="outline" size="sm" onClick={() => navigate('/documents')}>
+          문서 관리
+        </Button>
       </header>
 
       <ScrollArea className="flex-1 p-4">
         <div className="mx-auto max-w-3xl space-y-4">
+          {messages.length === 0 && (
+            <p className="text-center text-muted-foreground mt-20">
+              업로드된 문서에 대해 질문해보세요
+            </p>
+          )}
           {messages.map((msg, i) => (
             <div
               key={i}
