@@ -13,7 +13,7 @@ class CollectionApiTest extends IntegrationTestBase {
     @Test
     @DisplayName("컬렉션 생성 → 201")
     void createCollection() throws Exception {
-        mockMvc.perform(post("/api/v1/collections")
+        mockMvc.perform(withAuth(post("/api/v1/collections"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name": "테스트 컬렉션", "description": "통합 테스트"}
@@ -30,11 +30,11 @@ class CollectionApiTest extends IntegrationTestBase {
                 {"name": "중복 테스트", "description": "desc"}
                 """;
 
-        mockMvc.perform(post("/api/v1/collections")
+        mockMvc.perform(withAuth(post("/api/v1/collections"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
 
-        mockMvc.perform(post("/api/v1/collections")
+        mockMvc.perform(withAuth(post("/api/v1/collections"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isConflict());
@@ -43,7 +43,7 @@ class CollectionApiTest extends IntegrationTestBase {
     @Test
     @DisplayName("이름 없이 생성 → 400")
     void createWithoutName() throws Exception {
-        mockMvc.perform(post("/api/v1/collections")
+        mockMvc.perform(withAuth(post("/api/v1/collections"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"description": "이름 없음"}
@@ -54,20 +54,20 @@ class CollectionApiTest extends IntegrationTestBase {
     @Test
     @DisplayName("존재하지 않는 ID 조회 → 404")
     void findByNonExistentId() throws Exception {
-        mockMvc.perform(get("/api/v1/collections/00000000-0000-0000-0000-000000000000"))
+        mockMvc.perform(withAuth(get("/api/v1/collections/00000000-0000-0000-0000-000000000000")))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("컬렉션 목록 조회 → 200 + 페이지네이션")
     void findAll() throws Exception {
-        mockMvc.perform(post("/api/v1/collections")
+        mockMvc.perform(withAuth(post("/api/v1/collections"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"name": "목록 테스트", "description": "desc"}
                         """));
 
-        mockMvc.perform(get("/api/v1/collections"))
+        mockMvc.perform(withAuth(get("/api/v1/collections")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.totalElements").isNumber());

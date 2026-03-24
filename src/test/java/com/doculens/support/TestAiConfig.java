@@ -1,0 +1,40 @@
+package com.doculens.support;
+
+import com.doculens.ai.tools.DocumentTools;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+
+import static org.mockito.Mockito.mock;
+
+@TestConfiguration
+public class TestAiConfig {
+
+    @Bean
+    @Primary
+    VectorStore testVectorStore() {
+        return mock(VectorStore.class);
+    }
+
+    @Bean
+    @Primary
+    ChatMemory testChatMemory() {
+        return MessageWindowChatMemory.builder().maxMessages(10).build();
+    }
+
+    @Bean
+    @Primary
+    ChatClient testChatClient() {
+        return mock(ChatClient.class);
+    }
+
+    @Bean
+    @Primary
+    DocumentTools testDocumentTools() {
+        return mock(DocumentTools.class);
+    }
+}
