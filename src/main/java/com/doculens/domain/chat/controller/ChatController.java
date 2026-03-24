@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ public class ChatController {
 
     @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> chat(@Valid @RequestBody ChatRequest request) {
-        return ragService.streamChat(request.question(), request.collectionId());
+        String sessionId = request.sessionId() != null ? request.sessionId() : UUID.randomUUID().toString();
+        return ragService.streamChat(request.question(), request.collectionId(), sessionId);
     }
 }

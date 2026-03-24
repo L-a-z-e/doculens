@@ -10,6 +10,8 @@ public record ChatRequest(
         String question,
 
         @NotNull(message = "컬렉션 ID는 필수입니다")
-        UUID collectionId
+        UUID collectionId,
+
+        String sessionId
 ) {
 }
