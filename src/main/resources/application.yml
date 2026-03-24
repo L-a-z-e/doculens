@@ -34,10 +34,12 @@ spring:
     google:
       genai:
         api-key: ${GOOGLE_AI_API_KEY}
+        chat:
+          enabled: false
     ollama:
       base-url: http://localhost:11434
       chat:
-        enabled: false
+        model: deepseek-r1:14b
       embedding:
         model: nomic-embed-text
     vectorstore:

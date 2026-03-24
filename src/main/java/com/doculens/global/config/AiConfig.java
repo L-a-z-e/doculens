@@ -22,7 +22,7 @@ public class AiConfig {
             """;
 
     @Bean
-    ChatClient chatClient(@Qualifier("googleGenAiChatModel") ChatModel chatModel) {
+    ChatClient chatClient(@Qualifier("ollamaChatModel") ChatModel chatModel) {
         return ChatClient.builder(chatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .build();
