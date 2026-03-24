@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { streamChat } from '@/api/chat';
+import MessageBubble from '@/components/chat/MessageBubble';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -99,25 +100,12 @@ export default function ChatPage() {
             </p>
           )}
           {messages.map((msg, i) => (
-            <div
+            <MessageBubble
               key={i}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                }`}
-              >
-                <pre className="whitespace-pre-wrap font-sans text-sm">
-                  {msg.content}
-                  {isLoading && i === messages.length - 1 && msg.role === 'assistant' && (
-                    <span className="animate-pulse">▌</span>
-                  )}
-                </pre>
-              </div>
-            </div>
+              role={msg.role}
+              content={msg.content}
+              isStreaming={isLoading && i === messages.length - 1 && msg.role === 'assistant'}
+            />
           ))}
           <div ref={scrollRef} />
         </div>
