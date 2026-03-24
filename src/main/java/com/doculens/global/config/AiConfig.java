@@ -1,5 +1,6 @@
 package com.doculens.global.config;
 
+import com.doculens.ai.tools.DocumentTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,9 +23,11 @@ public class AiConfig {
             """;
 
     @Bean
-    ChatClient chatClient(@Qualifier("ollamaChatModel") ChatModel chatModel) {
+    ChatClient chatClient(@Qualifier("ollamaChatModel") ChatModel chatModel,
+                          DocumentTools documentTools) {
         return ChatClient.builder(chatModel)
                 .defaultSystem(SYSTEM_PROMPT)
+                .defaultTools(documentTools)
                 .build();
     }
 }
