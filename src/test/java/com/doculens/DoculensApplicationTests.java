@@ -1,13 +1,11 @@
 package com.doculens;
 
+import com.doculens.support.IntegrationTestBase;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class DoculensApplicationTests {
+class DoculensApplicationTests extends IntegrationTestBase {
 
     @Test
     void contextLoads() {
     }
-
 }
