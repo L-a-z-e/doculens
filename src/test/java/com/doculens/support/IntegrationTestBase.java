@@ -1,39 +1,40 @@
 package com.doculens.support;
 
-import com.jayway.jsonpath.JsonPath;
+import com.doculens.global.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import java.util.UUID;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
 @ActiveProfiles("test")
 @Import(TestAiConfig.class)
 public abstract class IntegrationTestBase {
 
+    static final PostgreSQLContainer<?> postgres;
+
+    static {
+        postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16")
+                .withDatabaseName("doculens_test")
+                .withUsername("test")
+                .withPassword("test");
+        postgres.start();
+    }
+
     @Autowired
     protected MockMvc mockMvc;
 
-    private String cachedToken;
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16")
-            .withDatabaseName("doculens_test")
-            .withUsername("test")
-            .withPassword("test");
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -42,21 +43,8 @@ public abstract class IntegrationTestBase {
         registry.add("spring.datasource.password", postgres::getPassword);
     }
 
-    protected String getTestToken() throws Exception {
-        if (cachedToken != null) return cachedToken;
-
-        String response = mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"email":"testuser@doculens.com","password":"password123","name":"테스터"}
-                                """))
-                .andReturn().getResponse().getContentAsString();
-
-        cachedToken = JsonPath.read(response, "$.accessToken");
-        return cachedToken;
-    }
-
-    protected MockHttpServletRequestBuilder withAuth(MockHttpServletRequestBuilder request) throws Exception {
-        return request.header("Authorization", "Bearer " + getTestToken());
+    protected MockHttpServletRequestBuilder withAuth(MockHttpServletRequestBuilder request) {
+        String token = jwtTokenProvider.createAccessToken(UUID.randomUUID(), "test@doculens.com");
+        return request.header("Authorization", "Bearer " + token);
     }
 }
